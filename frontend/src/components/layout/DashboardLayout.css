@@ -1,0 +1,49 @@
+.dashboard-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: #121212;
+}
+
+.dashboard-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  transition: all 0.3s ease;
+  margin-left: 260px;
+}
+
+.sidebar-collapsed .dashboard-main {
+  margin-left: 72px;
+}
+
+.dashboard-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  background: #121212;
+}
+
+.mobile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 49;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-main {
+    margin-left: 0;
+  }
+  .sidebar-collapsed .dashboard-main {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-content {
+    padding: 16px;
+  }
+}

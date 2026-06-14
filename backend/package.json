@@ -1,0 +1,42 @@
+{
+  "name": "eduguard-ai-backend",
+  "version": "1.0.0",
+  "description": "EduGuard AI Backend API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "migrate": "node src/database/migrate.js",
+    "seed": "node src/database/seed.js",
+    "deploy:start": "npm run migrate && npm run seed && npm start"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "csurf": "^1.11.0",
+    "csv-parser": "^3.0.0",
+    "dotenv": "^16.3.1",
+    "exceljs": "^4.4.0",
+    "express": "^4.18.2",
+    "express-async-errors": "^3.1.1",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1",
+    "fast-csv": "^5.0.1",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.7",
+    "pdfkit": "^0.14.0",
+    "pg": "^8.11.3",
+    "sequelize": "^6.35.1",
+    "sqlite3": "^6.0.1",
+    "uuid": "^9.0.0",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

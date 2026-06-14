@@ -1,0 +1,24 @@
+# Dependencies and builds
+**/node_modules/
+frontend/build/
+
+# Environment secrets
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Local database and uploads
+backend/*.db
+backend/*.db-*
+backend/uploads/
+
+# Runtime logs
+**/*.log
+backend/logs/
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
