@@ -83,18 +83,27 @@ router.get('/students/pdf', authenticate, async (req, res) => {
   doc.moveDown();
 
   // Table header
-  doc.fontSize(10).fillColor('#FFFFFF')
-    .rect(50, doc.y, 495, 20).fill('#E50914')
-    .fillColor('#FFFFFF')
-    .text('ID', 55, doc.y - 15)
-    .text('Name', 110, doc.y - 15)
-    .text('CGPA', 280, doc.y - 15)
-    .text('Attendance', 330, doc.y - 15)
-    .text('Risk', 440, doc.y - 15);
-  
-  doc.moveDown(0.5);
+  const drawTableHeader = () => {
+    const y = doc.y;
+    doc.fontSize(10).fillColor('#FFFFFF')
+      .rect(50, y, 495, 20).fill('#E50914')
+      .fillColor('#FFFFFF')
+      .text('ID', 55, y + 5, { lineBreak: false })
+      .text('Name', 110, y + 5, { lineBreak: false })
+      .text('CGPA', 280, y + 5, { lineBreak: false })
+      .text('Attendance', 330, y + 5, { lineBreak: false })
+      .text('Risk', 440, y + 5);
+    doc.moveDown(1.2);
+  };
 
-  students.slice(0, 40).forEach((s, i) => {
+  drawTableHeader();
+
+  students.forEach((s) => {
+    // Add a new page before overflowing the bottom margin
+    if (doc.y > 730) {
+      doc.addPage();
+      drawTableHeader();
+    }
     const y = doc.y;
     const bgColor = s.riskLevel === 'High' ? '#FFE0E0' : s.riskLevel === 'Medium' ? '#FFF3E0' : '#F0FFF0';
     doc.rect(50, y, 495, 18).fill(bgColor);

@@ -78,6 +78,16 @@ export const reportApi = {
   downloadPDF: (params) => api.get('/reports/students/pdf', { params, responseType: 'blob' }),
 };
 
+export const settingsApi = {
+  get: () => api.get('/settings'),
+  update: (data) => api.put('/settings', data),
+};
+
+export const auditLogApi = {
+  getAll: (params) => api.get('/auditlogs', { params }),
+  getActions: () => api.get('/auditlogs/actions'),
+};
+
 export const userApi = {
   getAll: (params) => api.get('/users', { params }),
   getById: (id) => api.get(`/users/${id}`),

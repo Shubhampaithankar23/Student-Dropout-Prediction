@@ -5,7 +5,7 @@ import { logout } from '../../store/slices/authSlice';
 import {
   MdDashboard, MdPeople, MdAnalytics, MdPsychology,
   MdAssessment, MdNotifications, MdSettings, MdLogout,
-  MdPerson, MdClose, MdSupervisorAccount
+  MdPerson, MdClose, MdSupervisorAccount, MdHistory
 } from 'react-icons/md';
 import { FaBrain } from 'react-icons/fa';
 import './Sidebar.css';
@@ -21,6 +21,7 @@ const navItems = [
   { path: '/dashboard/notifications', icon: MdNotifications, label: 'Notifications' },
   { path: '/dashboard/profile', icon: MdPerson, label: 'Profile' },
   { path: '/dashboard/users', icon: MdSupervisorAccount, label: 'Manage Users', roles: ['admin'] },
+  { path: '/dashboard/audit-log', icon: MdHistory, label: 'Audit Log', roles: ['admin'] },
   { path: '/dashboard/settings', icon: MdSettings, label: 'Settings', roles: ['admin'] },
 ];
 

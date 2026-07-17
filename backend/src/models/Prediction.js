@@ -28,11 +28,11 @@ const Prediction = sequelize.define('Prediction', {
     allowNull: false,
   },
   factors: {
-    type: DataTypes.JSONB,
+    type: DataTypes.JSON,
     defaultValue: {},
   },
   recommendations: {
-    type: DataTypes.JSONB,
+    type: DataTypes.JSON,
     defaultValue: [],
   },
   modelVersion: {
@@ -40,7 +40,7 @@ const Prediction = sequelize.define('Prediction', {
     defaultValue: '1.0.0',
   },
   inputData: {
-    type: DataTypes.JSONB,
+    type: DataTypes.JSON,
     defaultValue: {},
   },
 }, {

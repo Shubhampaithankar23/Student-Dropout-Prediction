@@ -1,9 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../services/api';
 
-export const fetchNotifications = createAsyncThunk('notifications/fetch', async (_, { rejectWithValue }) => {
+export const fetchNotifications = createAsyncThunk('notifications/fetch', async (params = {}, { rejectWithValue }) => {
   try {
-    const { data } = await api.get('/notifications?limit=50');
+    const { limit = 100, page = 1 } = params;
+    const { data } = await api.get('/notifications', { params: { limit, page } });
     return data;
   } catch (err) {
     return rejectWithValue(err.response?.data?.error);

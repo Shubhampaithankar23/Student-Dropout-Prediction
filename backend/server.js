@@ -23,6 +23,8 @@ const counselingRoutes = require('./src/routes/counseling');
 const reportRoutes = require('./src/routes/reports');
 const notificationRoutes = require('./src/routes/notifications');
 const dashboardRoutes = require('./src/routes/dashboard');
+const settingsRoutes = require('./src/routes/settings');
+const auditLogRoutes = require('./src/routes/auditlogs');
 
 const app = express();
 
@@ -73,6 +75,8 @@ app.use('/api/counseling', counselingRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/auditlogs', auditLogRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

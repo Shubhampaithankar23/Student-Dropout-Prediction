@@ -149,7 +149,22 @@ router.post('/', authenticate, authorize('admin', 'teacher'), [
 });
 
 // Update student
-router.put('/:id', authenticate, authorize('admin', 'teacher'), async (req, res) => {
+router.put('/:id', authenticate, authorize('admin', 'teacher'), [
+  body('name').optional().trim().isLength({ min: 2, max: 100 }),
+  body('email').optional().isEmail().normalizeEmail(),
+  body('age').optional().isInt({ min: 15, max: 60 }),
+  body('gender').optional().isIn(['Male', 'Female', 'Other']),
+  body('attendancePercentage').optional().isFloat({ min: 0, max: 100 }),
+  body('cgpa').optional().isFloat({ min: 0, max: 10 }),
+  body('assignmentSubmissionRate').optional().isFloat({ min: 0, max: 100 }),
+  body('lmsActivityScore').optional().isFloat({ min: 0, max: 100 }),
+  body('internalMarks').optional().isFloat({ min: 0, max: 100 }),
+  body('backlogs').optional().isInt({ min: 0 }),
+  body('participationScore').optional().isFloat({ min: 0, max: 100 }),
+  body('financialStatus').optional().isIn(['Good', 'Average', 'Poor']),
+  body('semester').optional().isInt({ min: 1, max: 12 }),
+  validate,
+], async (req, res) => {
   const student = await Student.findByPk(req.params.id);
   if (!student) return res.status(404).json({ error: 'Student not found' });
 
@@ -194,6 +209,30 @@ router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
   res.json({ message: 'Student removed successfully' });
 });
 
+// Restore soft-deleted student
+router.patch('/:id/restore', authenticate, authorize('admin'), async (req, res) => {
+  const student = await Student.findByPk(req.params.id);
+  if (!student) return res.status(404).json({ error: 'Student not found' });
+  if (student.isActive) return res.status(400).json({ error: 'Student is already active' });
+
+  await student.update({ isActive: true });
+  await createAuditLog(req.user.id, 'RESTORE', 'Student', student.id, { studentId: student.studentId }, req);
+  res.json({ message: 'Student restored successfully', student });
+});
+
+// Get soft-deleted students (admin only)
+router.get('/deleted/list', authenticate, authorize('admin'), async (req, res) => {
+  const { page = 1, limit = 20 } = req.query;
+  const offset = (parseInt(page) - 1) * parseInt(limit);
+  const { count, rows } = await Student.findAndCountAll({
+    where: { isActive: false },
+    order: [['updatedAt', 'DESC']],
+    limit: parseInt(limit),
+    offset,
+  });
+  res.json({ students: rows, total: count, page: parseInt(page), totalPages: Math.ceil(count / parseInt(limit)) });
+});
+
 // CSV Upload
 router.post('/upload/csv', authenticate, authorize('admin', 'teacher'), upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'CSV file required' });
@@ -219,53 +258,60 @@ router.post('/upload/csv', authenticate, authorize('admin', 'teacher'), upload.s
   const created = [];
   const skipped = [];
 
-  for (const { row, data } of results) {
-    try {
-      const existing = await Student.findOne({ where: { studentId: data.studentId || data.student_id } });
-      if (existing) { skipped.push({ row, reason: 'Student ID exists' }); continue; }
+  const t = await sequelize.transaction();
+  try {
+    for (const { row, data } of results) {
+      try {
+        const existing = await Student.findOne({ where: { studentId: data.studentId || data.student_id }, transaction: t });
+        if (existing) { skipped.push({ row, reason: 'Student ID exists' }); continue; }
 
-      const studentData = {
-        studentId: data.studentId || data.student_id,
-        name: data.name,
-        email: data.email,
-        age: parseInt(data.age),
-        gender: data.gender,
-        department: data.department,
-        semester: data.semester ? parseInt(data.semester) : null,
-        attendancePercentage: parseFloat(data.attendancePercentage || data.attendance_percentage || data.attendance),
-        cgpa: parseFloat(data.cgpa || data.CGPA),
-        assignmentSubmissionRate: parseFloat(data.assignmentSubmissionRate || data.assignment_submission_rate),
-        lmsActivityScore: parseFloat(data.lmsActivityScore || data.lms_activity_score),
-        internalMarks: parseFloat(data.internalMarks || data.internal_marks),
-        backlogs: parseInt(data.backlogs || 0),
-        participationScore: parseFloat(data.participationScore || data.participation_score),
-        financialStatus: data.financialStatus || data.financial_status || 'Average',
-        dropoutStatus: data.dropoutStatus === 'true' || data.dropout_status === 'true' || data.dropout_status === '1',
-        addedBy: req.user.id,
-      };
+        const studentData = {
+          studentId: data.studentId || data.student_id,
+          name: data.name,
+          email: data.email,
+          age: parseInt(data.age),
+          gender: data.gender,
+          department: data.department,
+          semester: data.semester ? parseInt(data.semester) : null,
+          attendancePercentage: parseFloat(data.attendancePercentage || data.attendance_percentage || data.attendance),
+          cgpa: parseFloat(data.cgpa || data.CGPA),
+          assignmentSubmissionRate: parseFloat(data.assignmentSubmissionRate || data.assignment_submission_rate),
+          lmsActivityScore: parseFloat(data.lmsActivityScore || data.lms_activity_score),
+          internalMarks: parseFloat(data.internalMarks || data.internal_marks),
+          backlogs: parseInt(data.backlogs || 0),
+          participationScore: parseFloat(data.participationScore || data.participation_score),
+          financialStatus: data.financialStatus || data.financial_status || 'Average',
+          dropoutStatus: data.dropoutStatus === 'true' || data.dropout_status === 'true' || data.dropout_status === '1',
+          addedBy: req.user.id,
+        };
 
-      const prediction = predictDropoutRisk(studentData);
-      studentData.riskLevel = prediction.riskLevel;
-      studentData.riskScore = prediction.riskScore;
-      studentData.predictionConfidence = prediction.confidence;
+        const prediction = predictDropoutRisk(studentData);
+        studentData.riskLevel = prediction.riskLevel;
+        studentData.riskScore = prediction.riskScore;
+        studentData.predictionConfidence = prediction.confidence;
 
-      const student = await Student.create(studentData);
-      
-      await Prediction.create({
-        studentId: student.id,
-        predictedBy: req.user.id,
-        riskLevel: prediction.riskLevel,
-        riskScore: prediction.riskScore,
-        confidence: prediction.confidence,
-        factors: prediction.factors,
-        recommendations: prediction.recommendations,
-        inputData: studentData,
-      });
+        const student = await Student.create(studentData, { transaction: t });
+        
+        await Prediction.create({
+          studentId: student.id,
+          predictedBy: req.user.id,
+          riskLevel: prediction.riskLevel,
+          riskScore: prediction.riskScore,
+          confidence: prediction.confidence,
+          factors: prediction.factors,
+          recommendations: prediction.recommendations,
+          inputData: studentData,
+        }, { transaction: t });
 
-      created.push(student.studentId);
-    } catch (err) {
-      errors.push({ row, error: err.message });
+        created.push(student.studentId);
+      } catch (err) {
+        errors.push({ row, error: err.message });
+      }
     }
+    await t.commit();
+  } catch (err) {
+    await t.rollback();
+    throw err;
   }
 
   await createAuditLog(req.user.id, 'CSV_UPLOAD', 'Student', null, { created: created.length, skipped: skipped.length, errors: errors.length }, req);

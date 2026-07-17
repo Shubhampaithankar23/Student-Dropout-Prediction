@@ -24,7 +24,7 @@ const AuditLog = sequelize.define('AuditLog', {
     allowNull: true,
   },
   details: {
-    type: DataTypes.JSONB,
+    type: DataTypes.JSON,
     defaultValue: {},
   },
   ipAddress: {

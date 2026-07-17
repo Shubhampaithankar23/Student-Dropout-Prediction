@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchStudents, deleteStudent, uploadCSV } from '../../store/slices/studentSlice';
 import { MdSearch, MdAdd, MdUpload, MdDelete, MdVisibility, MdRefresh, MdFileDownload } from 'react-icons/md';
@@ -12,6 +12,7 @@ const RISK_COLORS = { High: '#E50914', Medium: '#F59E0B', Low: '#22C55E' };
 
 const StudentsPage = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { list, total, totalPages, loading, uploading } = useSelector((s) => s.students);
   const { user } = useSelector((s) => s.auth);
@@ -188,7 +189,7 @@ const StudentsPage = () => {
                 </tr>
               ) : (
                 list.map((student) => (
-                  <tr key={student.id} className="student-table-row" onClick={() => window.location.href = `/dashboard/students/${student.id}`}>
+                  <tr key={student.id} className="student-table-row" onClick={() => navigate(`/dashboard/students/${student.id}`)}>
                     <td>
                       <div className="student-name-cell">
                         <div className="student-cell-avatar" style={{ background: RISK_COLORS[student.riskLevel] + '20', color: RISK_COLORS[student.riskLevel] }}>
@@ -252,11 +253,20 @@ const StudentsPage = () => {
           <div className="pagination">
             <span className="pagination-info">Showing {list.length} of {total} students</span>
             <div className="pagination-btns">
+              <button className="page-btn" disabled={filters.page <= 1} onClick={() => setFilters(f => ({ ...f, page: 1 }))}>«</button>
               <button className="page-btn" disabled={filters.page <= 1} onClick={() => setFilters(f => ({ ...f, page: f.page - 1 }))}>‹</button>
-              {[...Array(Math.min(totalPages, 5))].map((_, i) => (
-                <button key={i} className={`page-btn ${filters.page === i + 1 ? 'active' : ''}`} onClick={() => setFilters(f => ({ ...f, page: i + 1 }))}>{i + 1}</button>
-              ))}
+              {(() => {
+                const windowSize = 5;
+                const half = Math.floor(windowSize / 2);
+                let start = Math.max(1, filters.page - half);
+                let end = Math.min(totalPages, start + windowSize - 1);
+                if (end - start < windowSize - 1) start = Math.max(1, end - windowSize + 1);
+                return Array.from({ length: end - start + 1 }, (_, i) => start + i).map(p => (
+                  <button key={p} className={`page-btn ${filters.page === p ? 'active' : ''}`} onClick={() => setFilters(f => ({ ...f, page: p }))}>{p}</button>
+                ));
+              })()}
               <button className="page-btn" disabled={filters.page >= totalPages} onClick={() => setFilters(f => ({ ...f, page: f.page + 1 }))}>›</button>
+              <button className="page-btn" disabled={filters.page >= totalPages} onClick={() => setFilters(f => ({ ...f, page: totalPages }))}>»</button>
             </div>
           </div>
         )}

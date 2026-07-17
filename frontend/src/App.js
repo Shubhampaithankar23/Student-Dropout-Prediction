@@ -33,6 +33,7 @@ import ProfilePage from './pages/dashboard/ProfilePage';
 import UsersPage from './pages/dashboard/UsersPage';
 import SettingsPage from './pages/dashboard/SettingsPage';
 import NotificationsPage from './pages/dashboard/NotificationsPage';
+import AuditLogPage from './pages/dashboard/AuditLogPage';
 
 // Loading
 import LoadingScreen from './components/common/LoadingScreen';
@@ -99,6 +100,9 @@ function App() {
           } />
           <Route path="/dashboard/settings" element={
             <RoleRoute roles={['admin']}><SettingsPage /></RoleRoute>
+          } />
+          <Route path="/dashboard/audit-log" element={
+            <RoleRoute roles={['admin']}><AuditLogPage /></RoleRoute>
           } />
         </Route>
       </Route>

@@ -46,9 +46,8 @@ const predictDropoutRisk = (studentData) => {
     riskScore += normalizedFeatures[feature] * weight;
   }
 
-  // Add some realistic variation (simulating ensemble decisions)
-  const variation = (Math.random() - 0.5) * 0.05;
-  riskScore = Math.max(0, Math.min(1, riskScore + variation));
+  // Clamp score to valid range (no random noise — same input always yields same result)
+  riskScore = Math.max(0, Math.min(1, riskScore));
 
   // Determine risk level
   let riskLevel;
@@ -60,8 +59,11 @@ const predictDropoutRisk = (studentData) => {
     riskLevel = 'High';
   }
 
-  // Calculate confidence
-  const confidence = 0.75 + Math.random() * 0.2;
+  // Calculate deterministic confidence based on how far the score is from the nearest boundary
+  // Scores near decision boundaries (0.35, 0.65) have lower confidence; clear cases have higher
+  const boundaries = [0, 0.35, 0.65, 1];
+  const distToBoundary = boundaries.reduce((minDist, b) => Math.min(minDist, Math.abs(riskScore - b)), 1);
+  const confidence = Math.min(0.97, 0.70 + distToBoundary * 1.2);
 
   // Generate factor analysis
   const factors = [];
