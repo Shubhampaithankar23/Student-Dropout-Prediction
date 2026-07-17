@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { MdSecurity, MdSearch, MdRefresh, MdFilterList } from 'react-icons/md';
+import { MdSecurity, MdSearch, MdRefresh } from 'react-icons/md';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import './Dashboard.css';
