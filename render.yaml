@@ -13,9 +13,9 @@ services:
       - key: DB_DIALECT
         value: postgres
       - key: DATABASE_URL
-        sync: false
+        sync: false          # Set this manually in Render dashboard — Neon PostgreSQL URL
       - key: FRONTEND_URL
-        sync: false
+        sync: false          # Set this to your Vercel frontend URL after deploying
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_REFRESH_SECRET
@@ -30,4 +30,12 @@ services:
         value: "15"
       - key: RATE_LIMIT_MAX
         value: "200"
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_USER
+        sync: false          # Optional — set to enable email alerts
+      - key: EMAIL_PASS
+        sync: false          # Optional — set to enable email alerts
 

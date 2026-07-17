@@ -1,39 +1,92 @@
-# Free Deployment
+# EduGuard AI — Deployment Guide
 
-## 1. Neon PostgreSQL
+Frontend → Vercel ✅ (already live)  
+Backend  → Render (free tier)  
+Database → Neon PostgreSQL (free tier)
 
-1. Create a free project at https://neon.com.
-2. Copy its pooled PostgreSQL connection string.
-3. Keep it private; this becomes Render's `DATABASE_URL`.
+---
 
-## 2. Render Backend
+## Step 1 — Create a Free Neon Database
 
-1. In Render, choose **New > Blueprint** and select this GitHub repository.
-2. Render reads `render.yaml` and creates `eduguard-ai-api`.
-3. Set these required environment variables:
-   - `DATABASE_URL`: Neon pooled connection string
-   - `FRONTEND_URL`: temporary value `http://localhost:3000`
-4. Deploy and copy the generated backend URL.
-5. Verify `https://YOUR-RENDER-URL/health`.
+1. Go to **https://neon.tech** and sign up / log in.
+2. Click **New Project** → give it any name (e.g. `eduguard`).
+3. Once created, open **Connection Details**.
+4. Copy the **Pooled connection string** — it looks like:
+   ```
+   postgresql://user:password@ep-xxx.us-east-2.aws.neon.tech/neondb?sslmode=require
+   ```
+5. Save it — you will paste it into Render in Step 2.
 
-The first deploy automatically creates the database schema and demo accounts.
+---
 
-## 3. Vercel Frontend
+## Step 2 — Deploy the Backend on Render
 
-1. Import the same GitHub repository into Vercel.
-2. Set **Root Directory** to `frontend`.
-3. Keep the detected Create React App build settings.
-4. Add:
-   - `REACT_APP_API_URL=https://YOUR-RENDER-URL/api`
-5. Deploy and copy the generated Vercel URL.
+1. Go to **https://render.com** and sign up / log in with GitHub.
+2. Click **New → Web Service**.
+3. Connect your GitHub repo: `Shubhampaithankar23/Student-Dropout-Prediction`
+4. Fill in the settings:
+   - **Name**: `eduguard-ai-api`
+   - **Root Directory**: `backend`
+   - **Runtime**: `Node`
+   - **Build Command**: `npm ci`
+   - **Start Command**: `npm run deploy:start`
+   - **Plan**: Free
+5. Scroll to **Environment Variables** and add these:
 
-## 4. Final CORS Setting
+   | Key | Value |
+   |-----|-------|
+   | `NODE_ENV` | `production` |
+   | `DB_DIALECT` | `postgres` |
+   | `DATABASE_URL` | *(paste your Neon connection string)* |
+   | `FRONTEND_URL` | `https://student-dropout-prediction-ou9nf54v7.vercel.app` |
+   | `JWT_SECRET` | *(click Generate)* |
+   | `JWT_REFRESH_SECRET` | *(click Generate)* |
+   | `JWT_EXPIRES_IN` | `7d` |
+   | `JWT_REFRESH_EXPIRES_IN` | `30d` |
+   | `BCRYPT_ROUNDS` | `12` |
+   | `RATE_LIMIT_WINDOW` | `15` |
+   | `RATE_LIMIT_MAX` | `200` |
 
-In Render, replace `FRONTEND_URL` with the exact Vercel URL and redeploy.
+6. Click **Create Web Service** → wait ~2 minutes for it to build.
+7. Once the status shows **Live**, copy your Render URL, e.g.:
+   ```
+   https://eduguard-ai-api.onrender.com
+   ```
+8. Test it: open `https://eduguard-ai-api.onrender.com/health` in your browser.  
+   You should see: `{"status":"OK",...}`
 
-## Demo Login
+---
 
-- Admin: `admin@eduguard.ai` / `Admin@123`
-- Teacher: `teacher@eduguard.ai` / `Teacher@123`
-- Counselor: `counselor@eduguard.ai` / `Counselor@123`
+## Step 3 — Connect the Frontend to the Backend
 
+1. Go to your **Vercel dashboard** → select the `Student-Dropout-Prediction` project.
+2. Go to **Settings → Environment Variables**.
+3. Add (or update) this variable:
+
+   | Key | Value |
+   |-----|-------|
+   | `REACT_APP_API_URL` | `https://eduguard-ai-api.onrender.com/api` |
+
+4. Click **Save**.
+5. Go to **Deployments** → click **Redeploy** on the latest deployment (or push any small commit).
+6. Wait for the new Vercel build to finish.
+
+---
+
+## Step 4 — Test Login
+
+Open your Vercel URL and log in with the demo accounts:
+
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | `admin@eduguard.ai` | `Admin@123` |
+| Teacher | `teacher@eduguard.ai` | `Teacher@123` |
+| Counselor | `counselor@eduguard.ai` | `Counselor@123` |
+
+---
+
+## Notes
+
+- **Free Render services spin down after 15 minutes of inactivity.** The first request after sleep takes ~30 seconds. This is normal on the free tier.
+- The `deploy:start` script runs `migrate → seed → start` automatically on every deploy. Seed data is idempotent (won't duplicate on restarts).
+- Email alerts are disabled by default unless you set `EMAIL_USER` and `EMAIL_PASS` in Render.
